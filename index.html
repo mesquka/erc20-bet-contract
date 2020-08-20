@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <title>Signer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.2.11/dist/web3.min.js"></script>
+  </head>
+  <body>
+    <h1>Signer</h1>
+
+    Data:<br>
+    <textarea cols="30" rows="5" style="width: calc(100vw - 32px); height: 256px;" id="data"></textarea><br><br>
+    <button onclick="sign()">Sign</button>
+    <br><br>
+
+    Signature:<br>
+    <textarea cols="30" rows="5" style="width: calc(100vw - 32px); height: 256px;" id="signature"></textarea>
+
+    <script>
+      ethereum.autoRefreshOnNetworkChange = false;
+
+      window.ethereum.request({
+        method: 'eth_requestAccounts',
+      }, console.log);
+
+      function sign(signatureData) {
+        web3.personal.sign(
+          web3.sha3(
+            document.getElementById('data').value,
+            {encoding: 'hex'}
+          ),
+          web3.eth.accounts[0], 
+          (error, sig) => document.getElementById('signature').value = sig,
+        );
+      }
+    </script>
+  </body>
+</html>
