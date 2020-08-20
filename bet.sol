@@ -18,16 +18,46 @@ contract Bet {
   fallback() external payable {}
 
   // Allow ERC223 to be paid into contract
-  function tokenFallback (address from, uint value, bytes data) external {}
+  function tokenFallback (address from, uint value, bytes memory data) external {}
+
+  function getSignaturePreimage(
+    address winnerAddress
+  ) public view returns (
+    bytes memory
+  ){
+    // Sign winner address to prevent fraud
+    // Sign contract address to prevent replay attacks
+
+    return abi.encode(
+      winnerAddress,
+      this
+    );
+  }
 
   function setWinner(
-    address winnerAddress
+    address winnerAddress,
+    bytes memory countersignature
   ) external {
-    // Only arbitor can set winner
-    require(msg.sender == arbitor);
+    address countersigner = ECDSA.recover(
+      ECDSA.toEthSignedMessageHash(
+        keccak256(
+          getSignaturePreimage(winnerAddress)
+        )
+      ),
+      countersignature
+    );
 
-    // Winner must be one of the participants
-    require(winnerAddress == participantA || winnerAddress == participantB);
+    // Require signature from both participants
+    // (one participant signed the transaction
+    // the other signed as countersigner)
+
+    if (msg.sender == participantA) {
+      require(countersigner == participantB || countersigner == arbitor);
+    } else if (msg.sender == participantB) {
+      require(countersigner == participantA || countersigner == arbitor);
+    } else {
+      revert();
+    }
 
     winner = winnerAddress;
   }
